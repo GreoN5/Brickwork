@@ -10,7 +10,7 @@ namespace Brickwork
 	{
 		private string _firstLayerInput; // the input layer
 		private int[,] _secondLayerOutput; // the output layer
-		private int[,] _firstLayer;
+		private int[,] _firstLayer; // the input layer but has int values
 		private int _n; // the amount of lines that the second layer will receive
 		private int _m; // the amount of bricks/2 (1 brick consists of 2 numbers)
 
@@ -29,13 +29,19 @@ namespace Brickwork
 			this._secondLayerOutput = new int[n, m];
 		}
 
-		public bool MakeSecondLayerOfBrickworkAndPrint()
+		public void MakeSecondLayerOfBrickworkAndPrint()
 		{
 			PrintFirstLayer();
 
-			var firstLayer = GetFirstLayer();
+			Console.WriteLine();
 
-			return true;
+			var firstLayer = GetFirstLayer();
+			var lastColumnBricks = GetLastColumnOfBricks(firstLayer);
+			var withoutLastColumns = GetWithoutLastTwoColumnsOfBricks(firstLayer);
+			var separatedColumn = SeparateLastColumnOfBricksAndGetBricks(lastColumnBricks);
+			this._secondLayerOutput = MakeSecondLayer(withoutLastColumns, separatedColumn);
+
+			Console.WriteLine();
 		}
 
 		private void PrintFirstLayer()
@@ -91,6 +97,87 @@ namespace Brickwork
 			}
 
 			return this._firstLayer;
+		}
+
+		private int[,] MakeSecondLayer(int[,] firstLayer, int[,] separatedBricks)
+		{
+			for (int i = 0; i < this._secondLayerOutput.GetLength(0); i++)
+			{
+				for (int j = 0; j < this._secondLayerOutput.GetLength(1); j++)
+				{
+					if (j == 0 && this._secondLayerOutput[i, j] == 0)
+					{
+						this._secondLayerOutput[i, j] = separatedBricks[i, j];
+						this._secondLayerOutput[i + 1, j] = separatedBricks[i, j];
+					}
+
+					if (j == this._secondLayerOutput.GetLength(1) - 1)
+					{
+						if (this._secondLayerOutput[i, 0] == separatedBricks[i, 0])
+						{
+							this._secondLayerOutput[i, j] = separatedBricks[i + 1, 0];
+							this._secondLayerOutput[i + 1, j] = _secondLayerOutput[i, j];
+						}
+					}
+
+					if (j != 0 && j != this._secondLayerOutput.GetLength(1) - 1)
+					{
+						this._secondLayerOutput[i, j] = firstLayer[i, j - 1];
+					}
+				}
+			}
+
+			return this._secondLayerOutput;
+		}
+
+		private int[,] GetLastColumnOfBricks(int[,] firstLayer)
+		{
+			int[,] lastColumnOfBricks = new int[firstLayer.GetLength(0), 2];
+
+			for (int i = 0; i < firstLayer.GetLength(0); i++)
+			{
+				for (int j = firstLayer.GetLength(1); j > 1; j--)
+				{
+					if (j == firstLayer.GetLength(1) - 2)
+					{
+						break;
+					}
+
+					lastColumnOfBricks[i, j - (firstLayer.GetLength(1) - 1)] = firstLayer[i, j - 1];
+				}
+			}
+
+			return lastColumnOfBricks;
+		}
+
+		private int[,] GetWithoutLastTwoColumnsOfBricks(int[,] firstLayer)
+		{
+			int[,] withoutLastTwoColumnsOfBricks = new int[firstLayer.GetLength(0), firstLayer.GetLength(1) - 2];
+
+			for (int i = 0; i < firstLayer.GetLength(0); i++)
+			{
+				for (int j = 0; j < firstLayer.GetLength(1) - 2; j++)
+				{
+					withoutLastTwoColumnsOfBricks[i, j] = firstLayer[i, j];
+				}
+			}
+
+			return withoutLastTwoColumnsOfBricks;
+		}
+
+		private int[,] SeparateLastColumnOfBricksAndGetBricks(int[,] lastTwoColumns)
+		{
+			int[,] separatedColumn = new int[lastTwoColumns.GetLength(0), 1];
+
+			for (int i = 0; i < lastTwoColumns.GetLength(0); i++)
+			{
+				for (int j = 0; j < separatedColumn.GetLength(1); j++)
+				{
+					separatedColumn[i, j] = lastTwoColumns[i, j];
+				}
+			}
+
+			return separatedColumn;
 		}
 
 		private bool CheckIfFirstLayerLinesValid(string[] lines)
