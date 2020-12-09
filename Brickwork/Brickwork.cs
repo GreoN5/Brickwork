@@ -1,11 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 
 namespace Brickwork
 {
+	/// <summary>
+	/// Make a block of bricks
+	/// </summary>
 	public class Brickwork
 	{
 		private string _firstLayerInput; // the input layer
@@ -15,7 +15,7 @@ namespace Brickwork
 		private int _m; // the amount of bricks/2 (1 brick consists of 2 numbers)
 
 		/// <summary>
-		/// 
+		/// Make the first layer of the block
 		/// </summary>
 		/// <param name="n">The amount of lines that the layers will receive(must be equal to the lines of the firstLayer)</param>
 		/// <param name="m">The amount of bricks(each brick has 2 equal numbers in it)</param>
@@ -29,9 +29,14 @@ namespace Brickwork
 			this._secondLayerOutput = new int[n, m];
 		}
 
-		public void MakeSecondLayerOfBrickworkAndPrint()
+		/// <summary>
+		/// Prints the second layer
+		/// </summary>
+		public void MakeSecondLayer()
 		{
-			PrintFirstLayer();
+			Console.WriteLine("First layer:");
+			Console.WriteLine();
+			PrintFirstLayerIfThereIsOne();
 
 			Console.WriteLine();
 
@@ -42,39 +47,142 @@ namespace Brickwork
 			this._secondLayerOutput = MakeSecondLayer(withoutLastColumns, separatedColumn);
 
 			Console.WriteLine();
+
+			Console.WriteLine("Second layer:");
+			Console.WriteLine();
+
+			int result = PrintSecondLayerIfThereIsOne();
+
+			if (result == -1)
+			{
+				Console.WriteLine(result);
+			}
+
+			Console.WriteLine();
 		}
 
-		private void PrintFirstLayer()
+		/// <summary>
+		/// Prints first layer if it exists
+		/// </summary>
+		private void PrintFirstLayerIfThereIsOne()
 		{
-			if (CheckIfValidLinesAndBrickSize())
+			var firstLayer = GetFirstLayer(); // get the first input layer
+
+			if (firstLayer == null)
 			{
-				var firstLayer = GetFirstLayer();
-
-				if (firstLayer == null)
-				{
-					Console.WriteLine(-1);
-					return;
-				}
-
-				for (int i = 0; i < firstLayer.GetLength(0); i++)
-				{
-					for (int j = 0; j < firstLayer.GetLength(1); j++)
-					{
-						Console.Write(firstLayer[i, j]);
-					}
-
-					Console.WriteLine();
-				}
-
+				Console.WriteLine("Invalid layer!");
 				return;
 			}
 
-			Console.WriteLine(-1);
+			string asteriks = GetAsteriksAroundBricks(firstLayer); // get the number of asteriks needed for the grid
+
+			for (int i = 0; i < firstLayer.GetLength(0); i++)
+			{
+				for (int j = 0; j < firstLayer.GetLength(1); j++)
+				{
+					if (j % 2 == 0)
+					{
+						Console.Write("*");
+					}
+
+					Console.Write(firstLayer[i, j]);
+				}
+
+				Console.Write("*");
+				Console.WriteLine();
+				Console.WriteLine(asteriks);
+			}
 		}
 
+		/// <summary>
+		/// Prints the second layer if there is one
+		/// </summary>
+		/// <returns>Returs -1 if the layer is invalid, 0 if the layer can be made</returns>
+		private int PrintSecondLayerIfThereIsOne()
+		{
+			if (this._secondLayerOutput == null)
+			{
+				return -1;
+			}
+			else
+			{
+				string asteriks = GetAsteriksAroundBricks(this._secondLayerOutput); // get the needed asteriks for the second layer
+
+				for (int i = 0; i < this._secondLayerOutput.GetLength(0); i++)
+				{
+					Console.Write("*");
+
+					for (int j = 0; j < this._secondLayerOutput.GetLength(1); j++)
+					{
+						if (j == 1)
+						{
+							Console.Write("*");
+						}
+
+						Console.Write(this._secondLayerOutput[i, j]);
+
+						if (j > 1 && j % 2 == 0)
+						{
+							Console.Write("*");
+						}
+					}
+
+					Console.Write("*");
+					Console.WriteLine();
+
+					if ((i + 1) % 2 == 0)
+					{
+						asteriks = asteriks.Remove(1, 1).Insert(i, "*");
+						asteriks = asteriks.Remove(asteriks.Length - 1, 1).Insert(asteriks.Length - 1, "*");
+						Console.WriteLine(asteriks);
+					}
+					else if (i == 0)
+					{
+						asteriks = asteriks.Remove(i + 1, 1).Insert(i + 1, " ");
+						asteriks = asteriks.Remove(asteriks.Length - 1, 1).Insert(asteriks.Length - 1, " ");
+						Console.WriteLine(asteriks);
+					}
+					else if (i == 1)
+					{
+						asteriks = asteriks.Replace(" ", "*");
+						Console.WriteLine(asteriks);
+					}
+					else
+					{
+						asteriks = asteriks.Remove(1, 1).Insert(1, " ");
+						asteriks = asteriks.Remove(asteriks.Length - 1, 1).Insert(asteriks.Length - 1, " ");
+						Console.WriteLine(asteriks);
+					}
+				}
+
+				return 0;
+			}
+		}
+
+		/// <summary>
+		/// Get the number of asteriks need to surround the layer and the bricks
+		/// </summary>
+		/// <param name="layer">The layer that will be surrounded</param>
+		/// <returns>Returns the number of asterisk for the particular layer</returns>
+		private string GetAsteriksAroundBricks(int[,] layer)
+		{
+			string asteriks = "";
+
+			for (int i = 0; i < layer.GetLength(1) + (layer.GetLength(1) / 2) + 1; i++)
+			{
+				asteriks += "*";
+			}
+
+			return asteriks;
+		}
+
+		/// <summary>
+		/// Get the first input layer
+		/// </summary>
+		/// <returns>Returns the input layer or null if the layer is invalid</returns>
 		private int[,] GetFirstLayer()
 		{
-			string[] lines = this._firstLayerInput.Split(" ");
+			string[] lines = this._firstLayerInput.Split(" "); // get the lines into an array in order to loop through them and assign them to the first layer
 
 			if (!CheckIfFirstLayerLinesValid(lines) || !CheckIfValidBricksForFirstLayer(lines))
 			{
@@ -85,7 +193,7 @@ namespace Brickwork
 			{
 				char[] numberBricks = lines[i].ToCharArray();
 
-				if (numberBricks.Length != this._m)
+				if (!CheckIfValidLinesAndBrickSize())
 				{
 					return null;
 				}
@@ -99,8 +207,19 @@ namespace Brickwork
 			return this._firstLayer;
 		}
 
+		/// <summary>
+		/// Make the second layer of the first one and the last column of bricks of the first layer
+		/// </summary>
+		/// <param name="firstLayer">The input layer</param>
+		/// <param name="separatedBricks">The last column of bricks from the first layer</param>
+		/// <returns>Returns the second layer if the first one is valid, otherwise null</returns>
 		private int[,] MakeSecondLayer(int[,] firstLayer, int[,] separatedBricks)
 		{
+			if (firstLayer == null || separatedBricks == null)
+			{
+				return null;
+			}
+
 			for (int i = 0; i < this._secondLayerOutput.GetLength(0); i++)
 			{
 				for (int j = 0; j < this._secondLayerOutput.GetLength(1); j++)
@@ -130,8 +249,18 @@ namespace Brickwork
 			return this._secondLayerOutput;
 		}
 
+		/// <summary>
+		/// Get the last column of bricks from the input layer if valid
+		/// </summary>
+		/// <param name="firstLayer">The input layer</param>
+		/// <returns>Returns the last column of bricks from the input layer if valid, otherwise null</returns>
 		private int[,] GetLastColumnOfBricks(int[,] firstLayer)
 		{
+			if (firstLayer == null)
+			{
+				return null;
+			}
+
 			int[,] lastColumnOfBricks = new int[firstLayer.GetLength(0), 2];
 
 			for (int i = 0; i < firstLayer.GetLength(0); i++)
@@ -150,8 +279,18 @@ namespace Brickwork
 			return lastColumnOfBricks;
 		}
 
+		/// <summary>
+		/// Get the first layer without the last column of bricks
+		/// </summary>
+		/// <param name="firstLayer">The input first layer</param>
+		/// <returns>Returns the input layer without the last column of bricks if valid, otherwise null</returns>
 		private int[,] GetWithoutLastTwoColumnsOfBricks(int[,] firstLayer)
 		{
+			if (firstLayer == null)
+			{
+				return null;
+			}
+
 			int[,] withoutLastTwoColumnsOfBricks = new int[firstLayer.GetLength(0), firstLayer.GetLength(1) - 2];
 
 			for (int i = 0; i < firstLayer.GetLength(0); i++)
@@ -165,31 +304,51 @@ namespace Brickwork
 			return withoutLastTwoColumnsOfBricks;
 		}
 
-		private int[,] SeparateLastColumnOfBricksAndGetBricks(int[,] lastTwoColumns)
+		/// <summary>
+		/// Separates the last column of bricks
+		/// </summary>
+		/// <param name="lastColumn">The last column of bricks</param>
+		/// <returns>Returns separated last column if valid, otherwise null</returns>
+		private int[,] SeparateLastColumnOfBricksAndGetBricks(int[,] lastColumn)
 		{
-			int[,] separatedColumn = new int[lastTwoColumns.GetLength(0), 1];
+			if (lastColumn == null)
+			{
+				return null;
+			}
 
-			for (int i = 0; i < lastTwoColumns.GetLength(0); i++)
+			int[,] separatedColumn = new int[lastColumn.GetLength(0), 1];
+
+			for (int i = 0; i < lastColumn.GetLength(0); i++)
 			{
 				for (int j = 0; j < separatedColumn.GetLength(1); j++)
 				{
-					separatedColumn[i, j] = lastTwoColumns[i, j];
+					separatedColumn[i, j] = lastColumn[i, j];
 				}
 			}
 
 			return separatedColumn;
 		}
 
+		/// <summary>
+		/// Checks for the length of the input layer
+		/// </summary>
+		/// <param name="lines"></param>
+		/// <returns>Returns true if the lines are valid, otherwise false</returns>
 		private bool CheckIfFirstLayerLinesValid(string[] lines)
 		{
-			if (lines.Length != this._n && this._n % 3 == 0 || this._n < 2) // if the lines are not even numbers or there are less than 2 lines
-			{ 
+			if (lines.Length != this._n || this._n % 3 == 0 || this._n < 2) // if the lines are not even numbers or there are less than 2 lines
+			{
 				return false; // returns false for invalid layer
 			}
 
 			return true;
 		}
 
+		/// <summary>
+		/// Checks if the bricks are valid
+		/// </summary>
+		/// <param name="bricks"></param>
+		/// <returns>Returns true if the bricks are valid, otherwise false</returns>
 		private bool CheckIfValidBricksForFirstLayer(string[] bricks)
 		{
 			for (int i = 0; i < bricks.Length; i++)
@@ -198,19 +357,22 @@ namespace Brickwork
 
 				for (int j = 0; j < validBricks.Length; j += 2)
 				{
-					if (j == validBricks.Length - 1)
+					if (Regex.IsMatch(validBricks[i].ToString(), @"^\d+$"))
 					{
-						return true;
-					}
+						if (j == validBricks.Length - 1)
+						{
+							return true;
+						}
 
-					if (validBricks[j] != validBricks[j + 1])
-					{
-						return false;
-					}
+						if (validBricks[j] != validBricks[j + 1])
+						{
+							return false;
+						}
 
-					if (j > 0 && validBricks[j] == validBricks[j + 1] && validBricks[j] == validBricks[j - 1])
-					{
-						return false;
+						if (j > 0 && validBricks[j] == validBricks[j + 1] && validBricks[j] == validBricks[j - 1])
+						{
+							return false;
+						}
 					}
 				}
 			}
@@ -218,9 +380,13 @@ namespace Brickwork
 			return true;
 		}
 
+		/// <summary>
+		/// Checks if the size of the bricks and lines are valid
+		/// </summary>
+		/// <returns>Returns true if are valid, otherwise false</returns>
 		private bool CheckIfValidLinesAndBrickSize()
 		{
-			if (this._n < 100 && this._m < 100 && this._m / 2 == this._n)
+			if (this._n < 100 && this._m < 100 && this._m / 2 == this._n && this._m % 2 == 0)
 			{
 				if (CheckBrickSize() && CheckLinesSize())
 				{
@@ -231,6 +397,10 @@ namespace Brickwork
 			return false;
 		}
 
+		/// <summary>
+		/// Checks if the size of the bricks matches the size of the input
+		/// </summary>
+		/// <returns>Returns true if the size matches, otherwise false</returns>
 		private bool CheckBrickSize()
 		{
 			if (this._firstLayer.GetLength(1) == this._m)
@@ -241,6 +411,10 @@ namespace Brickwork
 			return false;
 		}
 
+		/// <summary>
+		/// Checks if the size of the lines matches the size of the input
+		/// </summary>
+		/// <returns>Returns true if the size matches, otherwise false</returns>
 		private bool CheckLinesSize()
 		{
 			if (this._firstLayer.GetLength(0) == this._n)
